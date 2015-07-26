@@ -63,7 +63,7 @@ public class Floor
         forceTemp   =   700*( 1 + alpha1*Math.sin(2*Math.PI*1*counter/period-phase1) );
         forceTemp   +=  700*( alpha2*Math.sin( 2*Math.PI*2*counter/period-phase2 ) );
         forceTemp   +=  700*( alpha3*Math.sin( 2*Math.PI*3*counter/period-phase3 ) );
-        return  forceTemp;
+        return  forceTemp/1000;
     }
 
 

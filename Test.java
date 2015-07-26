@@ -113,7 +113,17 @@ public class Test
                 {
                     String temp =   Double.toString( (j+1.0)*Test.SAMPLEPERIOD );
                     //if(temp.length()==3) 
-                    out.write(temp + "0    " + Double.toString( floor.force[i-1][j] ) +"\n");
+                    int afterPoint  =   temp.length()-temp.indexOf(".")-1;    //小数点后面的位数
+                    if(afterPoint==1) temp=temp+"0";
+                    else temp=temp.substring(0,temp.indexOf(".")+3);
+                   
+                    String  temp2   =   Double.toString( floor.force[i-1][j] ); //受力值
+                    afterPoint  =   temp2.length() - temp2.indexOf(".")-1;  //小数点后面的位数
+                    if(afterPoint <= 4) temp2 = temp2;
+                    else    temp2 = temp2.substring(0,temp.indexOf(".")+5);
+
+
+                    out.write(temp + " " + temp2 +"\r\n");
                     //else out.write(temp.substring(0,temp.indexOf(".")+3)  + "    " + Double.toString( floor.force[i-1][j] ) +"\n");
 
                 }
