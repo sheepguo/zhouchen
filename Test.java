@@ -16,11 +16,12 @@ public class Test
     
     public static void main(String[] args)
     {
-        int  num =   1;
+        int  num =   4;
         int  M   =   2;
         int  N   =   2;
         int  t   =   2;
         Floor floor  =   new Floor(M,N,t); //初始化Floor
+        floor.samplePeriod  =   Test.SAMPLEPERIOD;
         double  normalProbability[] =   {0.25,0.25,0.25,0.25};
         double  edgeProbability[]   =   {1/3,1/3,1/3};
         double  cornerProbability[] =   {0.5,0.5};
@@ -31,7 +32,7 @@ public class Test
         for(i=0;i<num;i++) 
         {
             System.out.println("第"+i+"个人的初始化和参数设置");
-            personList.add(new Person(floor,normalProbability,edgeProbability,cornerProbability));   //Person初始化
+            personList.add(new Person(floor,normalProbability,edgeProbability,cornerProbability,i+1));   //Person初始化
             personList.get(i).setStartCondition();  //设置第一步的参数
         }
 

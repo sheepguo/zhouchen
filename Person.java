@@ -16,9 +16,11 @@ public class Person
     final public static int LEFT    = 3;  
 
     final public static double  SAMPLEPERIOD    =   0.01;   
-    
+ 
+    int serialNumber;   //该人的编号
     int startDelay; //起步延时，单位是0.01s
     int direction;  //上一次行动时的方向；0123分别代表上下左右
+
 
     //double  startProbability[4];    //开始时，四个方向的出现概率，分别是上下左右
     double  normalProbability[] =   new double[4];   //正常情况下，四个方向的出现概率，分别是前后左右；
@@ -36,8 +38,9 @@ public class Person
     Floor   floor;
 
 
-    public Person(Floor floor, double normalProbability[], double edgeProbability[], double cornerProbability[])
+    public Person(Floor floor, double normalProbability[], double edgeProbability[], double cornerProbability[], int serialNumber)
     {
+        this.serialNumber           =   serialNumber;
         this.floor                  =   floor;
         this.normalProbability[0]   =   normalProbability[0];
         this.normalProbability[1]   =   normalProbability[1];
@@ -79,17 +82,19 @@ public class Person
 
         if(position == 0 || position == M-1 || position == M*N-1 || position == M*N-M)      //如果处于角落
         {
-            System.out.println("处于角落,temp=" +temp+ ", cornerSum[0]=" +cornerSum[0]+ ", cornerSum[1]=" +cornerSum[1]+ ", 旧的方向是" +direction);    
+            //System.out.println("处于角落,temp=" +temp+ ", cornerSum[0]=" +cornerSum[0]+ ", cornerSum[1]=" +cornerSum[1]+ ", 旧的方向是" +direction);    
         
             if(temp>cornerSum[0]) 
             {
-                direction   =   (direction-1+4)%4; //向左转
+                int direction_temp   =   (direction-1+4)%4; //向左转
                 //if(nextPosition(position,direction) >=M*N || nextPosition(position,direction) < 0)  //如果向左转超出了范围，就改为向右转
-                if(judgeDirection(position,direction) == 0)  //如果向左转超出了范围，就改为向右转
+                if(judgeDirection(position,direction_temp) == 0)  //如果向左转超出了范围，就改为向右转
                 {  
-                  System.out.println("方向为" +direction+ "有问题");
-                  direction   =   (direction+1)%4; //向右转
+                    //System.out.println("方向为" +direction_temp+ "有问题");
+                    direction_temp   =   (direction+1)%4; //向右转
+                    //System.out.println("修正后的方向是："+direction);
                 }
+                direction   =   direction_temp;
             }
             else direction   =   (direction+2)%4; //向后转
         }
@@ -115,7 +120,7 @@ public class Person
 
         if(direction == UP) newPosition = oldPosition - M;
         else if(direction == RIGHT) newPosition = oldPosition + 1;
-        else if(direction == DOWN)  newPosition = oldPosition - M;
+        else if(direction == DOWN)  newPosition = oldPosition + M;
         else  newPosition = oldPosition - 1;
         
         return  newPosition;
@@ -143,7 +148,7 @@ public class Person
         //while(nextPosition(position,direction) >=M*N || nextPosition(position,direction) < 0)
         while(judgeDirection(position,direction) == 0)  //当方向有问题的时候，继续求新的方向
         {
-            System.out.println("方向为" +direction+ "有问题");
+            //System.out.println("方向为" +direction+ "有问题");
             direction   =   random.nextInt(4);
         }
 
@@ -162,10 +167,11 @@ public class Person
         countDown--;
         if(countDown==0)    //表示一个周期到了，可以跨出一步了
         {
-            System.out.print("时间是" +floor.currentTime+ ", 倒计时结束，可以行走-->");
+            System.out.print("测试者" +serialNumber+ ", 时间是" +floor.currentTime+ ", 倒计时结束，可以行走-->");
             position    =   nextPosition(position,direction);
             floor.setForce(position,period);
             setPeriod();
+            countDown   =   period;
             setDirection(position);
             System.out.println("新的position是" +position+ ", 新的周期是" +period+ ", 新的方向是" +direction);
         }

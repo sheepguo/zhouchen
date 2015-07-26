@@ -9,6 +9,7 @@ date:2015/07/20
 
 public class Floor
 {
+    double samplePeriod;   //采样率
     int M;  //地板的长度
     int N;  //地板的宽度
     int t;  //总测试时间，单位是秒
@@ -48,6 +49,23 @@ public class Floor
     {
         this.currentTime    =   currentTime;
     }
+    
+    //计算受力大小
+    public double calculateForce(int period, int counter)
+    {
+        double forceTemp;
+        double alpha1  =   0.43349/(period*samplePeriod)-0.37219;
+        double alpha2  =   0.1339;
+        double alpha3  =   0.0964;
+        double phase1  =   0;
+        double phase2  =   Math.PI/2;
+        double phase3  =   Math.PI/2;
+        forceTemp   =   700*( 1 + alpha1*Math.sin(2*Math.PI*1*counter/period-phase1) );
+        forceTemp   +=  700*( alpha2*Math.sin( 2*Math.PI*2*counter/period-phase2 ) );
+        forceTemp   +=  700*( alpha3*Math.sin( 2*Math.PI*3*counter/period-phase3 ) );
+        return  forceTemp;
+    }
+
 
     public void setForce(int position, int period)    //当有人正好踩上某个位置时，触发setForce，其中position是位置点，period是这一脚对应的周期，之所以用周期，因为周期可以是整数，方便计算
     {
@@ -56,7 +74,8 @@ public class Floor
         {
             for(i=0;i<period && currentTime+i<sample;i++)   //从当前时间，到这一个周期结束，都会对这一点造成受力的影响
             {
-                force[position][currentTime+i]  =   1;
+                //force[position][currentTime+i]  =   1;
+                force[position][currentTime+i]  +=   calculateForce(period,i);;
             }
         }catch(ArrayIndexOutOfBoundsException e) 
         {
