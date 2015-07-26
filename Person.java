@@ -24,11 +24,13 @@ public class Person
 
     //double  startProbability[4];    //开始时，四个方向的出现概率，分别是上下左右
     double  normalProbability[] =   new double[4];   //正常情况下，四个方向的出现概率，分别是前后左右；
-    double  edgeProbability[]   =   new double[3];   //当走到边沿时，三个方向的出现概率，分别是前左右
+    double  edgeProbability[]   =   new double[3];   //当走到边沿时，三个方向的出现概率，分别是后左右
+    double  edgeProbability2[]  =   new double[3];   //当顺着边沿走到边沿时，三个方向的出现概率，分别是前后边
     double  cornerProbability[] =   new double[2];   //当走到角落时，两个方向的出现概率，分别是向后和向边上
    
     double  normalSum[]         =   new double[4];  //正常情况下，四个方向的累加值，用于确认方向使用，在构造函数中赋值，在setDirection()中使用
     double  edgeSum[]           =   new double[3];
+    double  edgeSum2[]          =   new double[3];
     double  cornerSum[]         =   new double[2];
 
     int position;   //这个人现在所处的位置
@@ -38,7 +40,7 @@ public class Person
     Floor   floor;
 
 
-    public Person(Floor floor, double normalProbability[], double edgeProbability[], double cornerProbability[], int serialNumber)
+    public Person(Floor floor, double normalProbability[], double edgeProbability[], double edgeProbability2[], double cornerProbability[], int serialNumber)
     {
         this.serialNumber           =   serialNumber;
         this.floor                  =   floor;
@@ -49,6 +51,9 @@ public class Person
         this.edgeProbability[0]     =   edgeProbability[0];
         this.edgeProbability[1]     =   edgeProbability[1];
         this.edgeProbability[2]     =   edgeProbability[2];
+        this.edgeProbability2[0]    =   edgeProbability2[0];
+        this.edgeProbability2[1]    =   edgeProbability2[1];
+        this.edgeProbability2[2]    =   edgeProbability2[2];
         this.cornerProbability[0]   =   cornerProbability[0];
         this.cornerProbability[1]   =   cornerProbability[1];
        
@@ -60,7 +65,11 @@ public class Person
         edgeSum[0]      =   edgeProbability[0];
         edgeSum[1]      =   edgeSum[0]      +   edgeProbability[1];
         edgeSum[2]      =   edgeSum[1]      +   edgeProbability[2];
-    
+   
+        edgeSum2[0]     =   edgeProbability2[0];
+        edgeSum2[1]     =   edgeSum2[0]      +   edgeProbability2[1];
+        edgeSum2[2]     =   edgeSum2[1]      +   edgeProbability2[2];
+
         cornerSum[0]    =   cornerProbability[0];
         cornerSum[1]    =   cornerSum[0]    +   cornerProbability[1];
     }
@@ -68,7 +77,7 @@ public class Person
     public void setPeriod() //每一步走完后，需要重新确认下一步的周期period是多少
     {
         double  fre     =   random.nextGaussian()*0.483+1.8295; //每一步的频率根据高斯分布得到
-        if(fre<0)   fre =   0;
+        if(fre<=0)   fre =   0.001;
         
         period          =   (int)(1.0/(fre*SAMPLEPERIOD));
     }
@@ -79,6 +88,7 @@ public class Person
         int M   =   floor.getM();
         int N   =   floor.getN();
         double  temp    =   random.nextDouble();
+        int direction_temp;
 
         if(position == 0 || position == M-1 || position == M*N-1 || position == M*N-M)      //如果处于角落
         {
@@ -86,13 +96,13 @@ public class Person
         
             if(temp>cornerSum[0]) 
             {
-                int direction_temp   =   (direction-1+4)%4; //向左转
+                direction_temp   =   (direction-1+4)%4; //向左转
                 //if(nextPosition(position,direction) >=M*N || nextPosition(position,direction) < 0)  //如果向左转超出了范围，就改为向右转
                 if(judgeDirection(position,direction_temp) == 0)  //如果向左转超出了范围，就改为向右转
                 {  
                     //System.out.println("方向为" +direction_temp+ "有问题");
                     direction_temp   =   (direction+1)%4; //向右转
-                    //System.out.println("修正后的方向是："+direction);
+                    //System.out.println("修正后的方向是："+direction_temp);
                 }
                 direction   =   direction_temp;
             }
@@ -100,9 +110,27 @@ public class Person
         }
         else if(position < M || position > M*N-M || position%M == 0 || position%M == M-1)   //如果处于边沿
         {
-            if(temp>edgeSum[1]) direction   =   (direction+1)%4; //向右转 
-            else if(temp>edgeSum[0]) direction   =   (direction-1+4)%4; //向左转 
-            else    direction   =   (direction+2)%4; //向后转 
+            //判断是否是正对着走到边沿的
+            if(judgeDirection(position,direction) == 0) //如果继续按照前面的方向行走会越界的话， 表示正对着走到边沿的
+            {
+                if(temp>edgeSum[1]) direction   =   (direction+1)%4; //向右转 
+                else if(temp>edgeSum[0]) direction   =   (direction-1+4)%4; //向左转 
+                else    direction   =   (direction+2)%4; //向后转 
+            }
+            else    //如果是靠着边沿走到边沿的
+            {
+                if(temp>edgeSum2[1]) 
+                {
+                    direction_temp =   (direction+1)%4;    //尝试向右转
+                    if(judgeDirection(position,direction_temp) == 0) //如果向右转不行，就向左
+                    {
+                        direction_temp   =   (direction-1+4)%4;
+                    }
+                    direction   =   direction_temp;
+                }
+                else if (temp>edgeSum[0])  direction   =   (direction+2)%4; //向后转
+                else direction = direction;
+            }
         }
         else    //如果处于中间位置
         {
@@ -159,7 +187,7 @@ public class Person
         startDelay  =   (int) (random.nextDouble()*period);         //第一步的延时，单位是0.01s
 
         countDown   =   period+startDelay;                          //倒计时，等于周期加上延时
-        System.out.println("position=" +position+ ", direction=" +direction+ ", frequency=" +fre+ ", period=" +period+ ", startDelay=" +startDelay+ ", countDown="+countDown);
+        //System.out.println("position=" +position+ ", direction=" +direction+ ", frequency=" +fre+ ", period=" +period+ ", startDelay=" +startDelay+ ", countDown="+countDown);
     }
 
     public void move()  //根据countDown进行判断是否移动，如果移动，则触发floor.setForce()，同时设置新的移动方向和周期
@@ -167,13 +195,13 @@ public class Person
         countDown--;
         if(countDown==0)    //表示一个周期到了，可以跨出一步了
         {
-            System.out.print("测试者" +serialNumber+ ", 时间是" +floor.currentTime+ ", 倒计时结束，可以行走-->");
+            //System.out.print("测试者" +serialNumber+ ", 时间是" +floor.currentTime+ ", 倒计时结束，可以行走-->");
             position    =   nextPosition(position,direction);
             floor.setForce(position,period);
             setPeriod();
             countDown   =   period;
             setDirection(position);
-            System.out.println("新的position是" +position+ ", 新的周期是" +period+ ", 新的方向是" +direction);
+            //System.out.println("新的position是" +position+ ", 新的周期是" +period+ ", 新的方向是" +direction);
         }
 
     }
