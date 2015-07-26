@@ -25,7 +25,7 @@ public class Floor
         this.t  =   t;
         sample  =   (int)(t/0.01);
         force   =   new double[M*N][sample];
-        currentTimt =   0;
+        currentTime =   0;
 
         int i,j;
         for(i=0;i<M*N;i++)
@@ -49,12 +49,19 @@ public class Floor
         this.currentTime    =   currentTime;
     }
 
-    public static setForce(int position, int period)    //当有人正好踩上某个位置时，触发setForce，其中position是位置点，period是这一脚对应的周期，之所以用周期，因为周期可以是整数，方便计算
+    public void setForce(int position, int period)    //当有人正好踩上某个位置时，触发setForce，其中position是位置点，period是这一脚对应的周期，之所以用周期，因为周期可以是整数，方便计算
     {
-        int i;
-        for(i=0;i<period;i++)   //从当前时间，到这一个周期结束，都会对这一点造成受力的影响
+        int i=0;
+        try
         {
-            force[position][currentTime+i]  =   1;
+            for(i=0;i<period && currentTime+i<sample;i++)   //从当前时间，到这一个周期结束，都会对这一点造成受力的影响
+            {
+                force[position][currentTime+i]  =   1;
+            }
+        }catch(ArrayIndexOutOfBoundsException e) 
+        {
+            System.out.println("position=" +position+ ", currentTime=" +currentTime+ ",i=" +i);     
+            e.printStackTrace(); 
         }
     }
 
