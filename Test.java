@@ -37,7 +37,7 @@ public class Test
         double  edgeProbability[]   =   new double[3];
         double  edgeProbability2[]  =   new double[3];
         double  cornerProbability[] =   new double[2];
-        
+       
         num =   Integer.parseInt(args[0]);
         M   =   Integer.parseInt(args[1]);
         N   =   Integer.parseInt(args[2]);
@@ -52,9 +52,9 @@ public class Test
         edgeProbability[1]  =   Double.parseDouble(args[9]);
         edgeProbability[2]  =   Double.parseDouble(args[10]);
         
-        edgeProbability[0]  =   Double.parseDouble(args[11]);
-        edgeProbability[1]  =   Double.parseDouble(args[12]);
-        edgeProbability[2]  =   Double.parseDouble(args[13]);
+        edgeProbability2[0]  =   Double.parseDouble(args[11]);
+        edgeProbability2[1]  =   Double.parseDouble(args[12]);
+        edgeProbability2[2]  =   Double.parseDouble(args[13]);
         
         cornerProbability[0]    =   Double.parseDouble(args[14]);
         cornerProbability[1]    =   Double.parseDouble(args[15]);
@@ -123,7 +123,8 @@ public class Test
                     else    temp2 = temp2.substring(0,temp.indexOf(".")+5);
 
 
-                    out.write(temp + " " + temp2 +"\r\n");
+                    //out.write(temp + " " + temp2 +"\r\n");
+                    out.write(temp2 +"\r\n");
                     //else out.write(temp.substring(0,temp.indexOf(".")+3)  + "    " + Double.toString( floor.force[i-1][j] ) +"\n");
 
                 }
@@ -136,6 +137,29 @@ public class Test
             }
         
         }
+
+            try
+            {
+                // Create file 
+                FileWriter fstream = new FileWriter("../files/" + "random.txt");
+                BufferedWriter out = new BufferedWriter(fstream); 
+                for(int k=0;k<num;k++)
+                {
+                    out.write(personList.get(k).period + "\r\n");
+                }
+                out.write("\r\n\r\n"); 
+                for(int k=0;k<num;k++)
+                {
+                    out.write(personList.get(k).randomPhase + "\r\n");
+                }
+                out.close(); 
+            } 
+            catch(Exception e)
+            {//Catch exception if any'
+                e.printStackTrace();
+                System.err.println("Error: " + e.getMessage());
+            }
+
 
     }
 }

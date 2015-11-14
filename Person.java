@@ -20,7 +20,7 @@ public class Person
     int serialNumber;   //该人的编号
     int startDelay; //起步延时，单位是0.01s
     int direction;  //上一次行动时的方向；0123分别代表上下左右
-
+    double  randomPhase;    //受力计算公式中的随机相位值    
 
     //double  startProbability[4];    //开始时，四个方向的出现概率，分别是上下左右
     double  normalProbability[] =   new double[4];   //正常情况下，四个方向的出现概率，分别是前后左右；
@@ -39,9 +39,17 @@ public class Person
     Random  random  =   new Random();
     Floor   floor;
 
+    int count;
+    boolean firstStep   =   true;
+
+    public Person()
+    {
+
+    }
 
     public Person(Floor floor, double normalProbability[], double edgeProbability[], double edgeProbability2[], double cornerProbability[], int serialNumber)
     {
+        this.randomPhase            =   random.nextDouble()*Math.PI*2;
         this.serialNumber           =   serialNumber;
         this.floor                  =   floor;
         this.normalProbability[0]   =   normalProbability[0];
@@ -72,6 +80,7 @@ public class Person
 
         cornerSum[0]    =   cornerProbability[0];
         cornerSum[1]    =   cornerSum[0]    +   cornerProbability[1];
+        //System.out.println(edgeSum2[0] + "   " + edgeSum2[1] +"   "+ edgeSum2[2]);
     }
 
     public void setPeriod() //每一步走完后，需要重新确认下一步的周期period是多少
@@ -88,56 +97,129 @@ public class Person
         int M   =   floor.getM();
         int N   =   floor.getN();
         double  temp    =   random.nextDouble();
-        int direction_temp;
+        int direction_temp=0;
 
         if(position == 0 || position == M-1 || position == M*N-1 || position == M*N-M)      //如果处于角落
         {
-            //System.out.println("处于角落,temp=" +temp+ ", cornerSum[0]=" +cornerSum[0]+ ", cornerSum[1]=" +cornerSum[1]+ ", 旧的方向是" +direction);    
+            //System.out.println("处于角落,temp=" +temp+ ", 旧的方向是" +direction);    
         
             if(temp>cornerSum[0]) 
             {
                 direction_temp   =   (direction-1+4)%4; //向左转
-                //if(nextPosition(position,direction) >=M*N || nextPosition(position,direction) < 0)  //如果向左转超出了范围，就改为向右转
-                if(judgeDirection(position,direction_temp) == 0)  //如果向左转超出了范围，就改为向右转
-                {  
-                    //System.out.println("方向为" +direction_temp+ "有问题");
+                if(judgeDirection(position,direction_temp) == 0 )  //如果向左转超出了范围，就改为向右转
+                {
                     direction_temp   =   (direction+1)%4; //向右转
                     //System.out.println("修正后的方向是："+direction_temp);
                 }
-                direction   =   direction_temp;
             }
-            else direction   =   (direction+2)%4; //向后转
+            else
+                direction_temp   =   (direction+2)%4; //向后转
+
+            count   =   0;
+            while(judgeDirection(position,direction_temp) == -1) //如果新的位置被其他人占据，就需要重新寻找新位置
+            {   
+                temp    =   random.nextDouble();
+                if(temp>cornerSum[0]) 
+                {
+                    direction_temp   =   (direction-1+4)%4; //向左转
+                    if(judgeDirection(position,direction_temp) == 0 )  //如果向左转超出了范围，就改为向右转
+                    {
+                        direction_temp   =   (direction+1)%4; //向右转
+                        //System.out.println("修正后的方向是："+direction_temp);
+                    }
+                }
+                else
+                    direction_temp   =   (direction+2)%4; //向后转
+                count++;
+                if(count>100 && judgeDirection(position,direction_temp)!=0) break; 
+            }
+            direction   =   direction_temp;
         }
         else if(position < M || position > M*N-M || position%M == 0 || position%M == M-1)   //如果处于边沿
         {
             //判断是否是正对着走到边沿的
             if(judgeDirection(position,direction) == 0) //如果继续按照前面的方向行走会越界的话， 表示正对着走到边沿的
             {
-                if(temp>edgeSum[1]) direction   =   (direction+1)%4; //向右转 
-                else if(temp>edgeSum[0]) direction   =   (direction-1+4)%4; //向左转 
-                else    direction   =   (direction+2)%4; //向后转 
+                //System.out.println("正对着走到边沿, temp=" +temp);
+                if(temp>edgeSum[1]) direction_temp   =   (direction+1)%4; //向右转 
+                else if(temp>edgeSum[0]) direction_temp   =   (direction-1+4)%4; //向左转 
+                else    direction_temp   =   (direction+2)%4; //向后转
+                count=0;
+                while(judgeDirection(position,direction_temp) == -1) //如果新的位置被其他人占据，就需要重新寻找新位置
+                {
+                    temp    =   random.nextDouble();
+                    if(temp>edgeSum[1]) direction_temp   =   (direction+1)%4; //向右转 
+                    else if(temp>edgeSum[0]) direction_temp   =   (direction-1+4)%4; //向左转 
+                    else    direction_temp   =   (direction+2)%4; //向后转
+                    count++;
+                    if(count>100 && judgeDirection(position,direction_temp)!=0) break; 
+                }
+                direction   =   direction_temp;
             }
             else    //如果是靠着边沿走到边沿的
             {
+                //System.out.println("靠着边走到边沿, temp=" +temp);
                 if(temp>edgeSum2[1]) 
                 {
                     direction_temp =   (direction+1)%4;    //尝试向右转
+                    //System.out.println("原来方向是:" +direction+ ",  下一个方向是：" +direction_temp);
                     if(judgeDirection(position,direction_temp) == 0) //如果向右转不行，就向左
                     {
                         direction_temp   =   (direction-1+4)%4;
                     }
-                    direction   =   direction_temp;
                 }
-                else if (temp>edgeSum[0])  direction   =   (direction+2)%4; //向后转
-                else direction = direction;
+                else
+                {    
+                    if (temp>edgeSum[0])
+                        direction_temp   =   (direction+2)%4; //向后转
+                    else
+                        direction_temp   =   direction;
+                }
+                count=0;
+                while(judgeDirection(position,direction_temp) == -1)
+                {
+                    temp    =   random.nextDouble();
+                    count++;
+                    if(temp>edgeSum2[1]) 
+                    {
+                        direction_temp =   (direction+1)%4;    //尝试向右转
+                        //System.out.println("原来方向是:" +direction+ ",  下一个方向是：" +direction_temp);
+                        if(judgeDirection(position,direction_temp) == 0) //如果向右转不行，就向左
+                        {
+                            direction_temp   =   (direction-1+4)%4;
+                        }
+                    }
+                    else
+                    {    
+                        if (temp>edgeSum[0])
+                            direction_temp   =   (direction+2)%4; //向后转
+                        else
+                            direction_temp   =   direction;
+                    }
+                    if(count>100 && judgeDirection(position,direction_temp)!=0) break; 
+                }
+                direction   =   direction_temp;
             }
         }
         else    //如果处于中间位置
         {
-            if(temp>normalSum[2]) direction =  (direction+1)%4; //向右转 
-            else if(temp>normalSum[1]) direction =  (direction-1+4)%4; //向左转 
-            else if(temp>normalSum[0]) direction =  (direction+2)%4; //向后转 
+            if(temp>normalSum[2]) direction_temp =  (direction+1)%4; //向右转 
+            else if(temp>normalSum[1]) direction_temp =  (direction-1+4)%4; //向左转 
+            else if(temp>normalSum[0]) direction_temp =  (direction+2)%4; //向后转 
+            else  direction_temp =  direction; //向后转 
             //如果向前，则方向不变
+            count=0;
+            while(judgeDirection(position,direction_temp) == -1) //如果新的位置被其他人占据，就需要重新寻找新位置
+            {
+                temp    =   random.nextDouble();
+                if(temp>normalSum[2]) direction_temp =  (direction+1)%4; //向右转 
+                else if(temp>normalSum[1]) direction_temp =  (direction-1+4)%4; //向左转 
+                else if(temp>normalSum[0]) direction_temp =  (direction+2)%4; //向后转 
+                else  direction_temp =  direction; //向后转 
+                count++;
+                if(count>100 ) break; 
+            }
+            direction   =   direction_temp;
         }
     }
 
@@ -158,10 +240,33 @@ public class Person
     {
         int M   =   floor.getM();
         int N   =   floor.getN();
-        if(position<M && direction==UP) return 0; //如果是在上边沿且方向向上，报错
-        if(position>=M*N-M && direction==DOWN) return 0;   //如果是在下边沿且方向向下
-        if(position%M==0 && direction==LEFT) return 0;
-        if(position%M==M-1 && direction==RIGHT) return 0;
+        //System.out.print("测试者" +serialNumber+ "  position=" +position+ "  direction=" +direction);
+        if(position<M && direction==UP) 
+        {
+            //System.out.println("  返回0");
+            return 0; //如果是在上边沿且方向向上，报错
+        }
+        if(position>=M*N-M && direction==DOWN) 
+        {
+            //System.out.println("  返回0");
+            return 0;   //如果是在下边沿且方向向下
+        }
+        if(position%M==0 && direction==LEFT) 
+        {
+            //System.out.println("  返回0");
+            return 0;
+        }
+        if(position%M==M-1 && direction==RIGHT) 
+        {
+            //System.out.println("  返回0");
+            return 0;
+        }
+        if(floor.getDistribution(nextPosition(position,direction))    ==  1) //如果下一个位置此时正好被其他人占据，就标志该方向不能走
+        {
+            //System.out.println("  由于被其他人占据而返回-1");
+            return -1;
+        }
+        //System.out.println("  返回1");
         return 1;
     }
 
@@ -171,19 +276,14 @@ public class Person
         int N   =   floor.getN();
         position    =   random.nextInt(floor.getM()*floor.getN());  //初始位置，从0到M*N-1
         
-        direction   =   random.nextInt(4);                          //第一步的方向 
-        //setDirection(position);                          //第一步的方向 
-        //while(nextPosition(position,direction) >=M*N || nextPosition(position,direction) < 0)
-        while(judgeDirection(position,direction) == 0)  //当方向有问题的时候，继续求新的方向
-        {
-            //System.out.println("方向为" +direction+ "有问题");
-            direction   =   random.nextInt(4);
-        }
+        floor.setDistribution(position);    //标记该位置有人占据
+
 
         double  fre     =   random.nextGaussian()*0.483+1.8295;     //第一步的频率根据高斯分布得到
         if(fre<0)   fre =   0;
         period          =   (int)(1.0/(fre*SAMPLEPERIOD));
-        
+        System.out.println("测试者" +serialNumber+ ",  周期是" +period);
+
         startDelay  =   (int) (random.nextDouble()*period);         //第一步的延时，单位是0.01s
 
         countDown   =   period+startDelay;                          //倒计时，等于周期加上延时
@@ -195,14 +295,54 @@ public class Person
         countDown--;
         if(countDown==0)    //表示一个周期到了，可以跨出一步了
         {
-            //System.out.print("测试者" +serialNumber+ ", 时间是" +floor.currentTime+ ", 倒计时结束，可以行走-->");
+            //System.out.println("测试者" +serialNumber+ ", 时间是" +floor.currentTime+ ", 倒计时结束，可以行走-->");
+            floor.clearDistribution(position);  //清除该位置的占据标志
+            int oldPosition =   position;
+            
+            if(firstStep)
+            {
+                direction   =   random.nextInt(4);                          //第一步的方向 
+                //setDirection(position);                          //第一步的方向 
+                //while(nextPosition(position,direction) >=M*N || nextPosition(position,direction) < 0)
+                count   =   0;
+                while(judgeDirection(position,direction) != 1)  //当方向有问题的时候，继续求新的方向
+                {
+                    //System.out.println("方向为" +direction+ "有问题");
+                    direction   =   random.nextInt(4);
+                    count++;
+                    if(count>100 && judgeDirection(position,direction)!=0) break; 
+                }
+                firstStep=false;
+            }
+            else
+            {
+                setDirection(position);
+            }
+            
             position    =   nextPosition(position,direction);
-            floor.setForce(position,period);
-            setPeriod();
+            
+            System.out.println("测试者" +serialNumber+ ",时间是" +floor.currentTime+ ",老位置：" +oldPosition+ ",  新位置：" +position);
+            //if(position<0 || position>=floor.getM()*floor.getN())
+            //{
+            //    System.out.print("发生错误--->");
+            //    System.out.println("上一个位置："+oldPosition+"   当前位置："+position+"  前进方向："+direction);
+
+            //}
+            
+            floor.setDistribution(position);    //标记该位置有人占据
+            floor.setForce(position,period,randomPhase);
+            //setPeriod();
             countDown   =   period;
-            setDirection(position);
             //System.out.println("新的position是" +position+ ", 新的周期是" +period+ ", 新的方向是" +direction);
         }
+
+    }
+
+    public static void main(String[] args)
+    {
+        Person person   =   new Person();
+        //System.out.println(person.judgeDirection(91,2));
+        //System.out.println(person.judgeDirection(1,0));
 
     }
 
