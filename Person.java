@@ -27,7 +27,8 @@ public class Person
     double  edgeProbability[]   =   new double[3];   //当走到边沿时，三个方向的出现概率，分别是后左右
     double  edgeProbability2[]  =   new double[3];   //当顺着边沿走到边沿时，三个方向的出现概率，分别是前后边
     double  cornerProbability[] =   new double[2];   //当走到角落时，两个方向的出现概率，分别是向后和向边上
-   
+    double  freInput;                                //从外部输入的走路频率要求，0表示正态随机分布；
+
     double  normalSum[]         =   new double[4];  //正常情况下，四个方向的累加值，用于确认方向使用，在构造函数中赋值，在setDirection()中使用
     double  edgeSum[]           =   new double[3];
     double  edgeSum2[]          =   new double[3];
@@ -47,7 +48,7 @@ public class Person
 
     }
 
-    public Person(Floor floor, double normalProbability[], double edgeProbability[], double edgeProbability2[], double cornerProbability[], int serialNumber)
+    public Person(Floor floor, double normalProbability[], double edgeProbability[], double edgeProbability2[], double cornerProbability[], int serialNumber, double freInput)
     {
         this.randomPhase            =   random.nextDouble()*Math.PI*2;
         this.serialNumber           =   serialNumber;
@@ -64,6 +65,7 @@ public class Person
         this.edgeProbability2[2]    =   edgeProbability2[2];
         this.cornerProbability[0]   =   cornerProbability[0];
         this.cornerProbability[1]   =   cornerProbability[1];
+        this.freInput               =   freInput;
        
         normalSum[0]    =   normalProbability[0];
         normalSum[1]    =   normalSum[0]    +   normalProbability[1];
@@ -83,6 +85,7 @@ public class Person
         //System.out.println(edgeSum2[0] + "   " + edgeSum2[1] +"   "+ edgeSum2[2]);
     }
 
+/*每一个测试者的走路频率是固定的，因此这个函数用不着了
     public void setPeriod() //每一步走完后，需要重新确认下一步的周期period是多少
     {
         double  fre     =   random.nextGaussian()*0.483+1.8295; //每一步的频率根据高斯分布得到
@@ -90,7 +93,7 @@ public class Person
         
         period          =   (int)(1.0/(fre*SAMPLEPERIOD));
     }
-
+*/
 
     public void setDirection(int position)  //每一步走完后，需要根据当前的位置，确认下一步的行走方向
     {
@@ -277,9 +280,12 @@ public class Person
         position    =   random.nextInt(floor.getM()*floor.getN());  //初始位置，从0到M*N-1
         
         floor.setDistribution(position);    //标记该位置有人占据
-
-
-        double  fre     =   random.nextGaussian()*0.483+1.8295;     //第一步的频率根据高斯分布得到
+        
+        double  fre;
+        if(freInput<0.05)   //如果freInput为0，就随机分布
+            fre     =   random.nextGaussian()*0.483+1.8295;     //第一步的频率根据高斯分布得到
+        else
+            fre =   freInput;   //如果不为0，就另freInput为fre
         if(fre<0)   fre =   0;
         period          =   (int)(1.0/(fre*SAMPLEPERIOD));
         System.out.println("测试者" +serialNumber+ ",  周期是" +period);

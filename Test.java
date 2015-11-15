@@ -13,11 +13,11 @@ import java.io.*;
 
 public class Test
 {
-    final public static double  SAMPLEPERIOD    =   0.01;
+    final public static double  SAMPLEPERIOD    =   0.01;   //采样周期
     
     public static void main(String[] args)
     {
-        if(args.length!=16)
+        if(args.length!=17)
         {
             System.out.println("输入参数数量不对");
             return;
@@ -37,7 +37,8 @@ public class Test
         double  edgeProbability[]   =   new double[3];
         double  edgeProbability2[]  =   new double[3];
         double  cornerProbability[] =   new double[2];
-       
+        double  freInput;
+
         num =   Integer.parseInt(args[0]);
         M   =   Integer.parseInt(args[1]);
         N   =   Integer.parseInt(args[2]);
@@ -58,6 +59,8 @@ public class Test
         
         cornerProbability[0]    =   Double.parseDouble(args[14]);
         cornerProbability[1]    =   Double.parseDouble(args[15]);
+
+        freInput            =   Double.parseDouble(args[16]);
         //num =   4;
         //M   =   2;
         //N   =   2;
@@ -75,7 +78,7 @@ public class Test
         for(i=0;i<num;i++) 
         {
             //System.out.println("第"+i+"个人的初始化和参数设置");
-            personList.add(new Person(floor,normalProbability,edgeProbability,edgeProbability2,cornerProbability,i+1));   //Person初始化
+            personList.add(new Person(floor,normalProbability,edgeProbability,edgeProbability2,cornerProbability,i+1,freInput));   //Person初始化
             personList.get(i).setStartCondition();  //设置第一步的参数
         }
 
